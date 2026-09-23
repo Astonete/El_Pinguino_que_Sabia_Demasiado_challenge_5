@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manual Teórico — Logging Distribuido</title>
+<style>
+  :root {
+    --bg: #f6f5f2;
+    --bg-panel: #ffffff;
+    --text: #1f2328;
+    --text-dim: #55606b;
+    --accent: #6d4aff;
+    --accent-soft: #efe9ff;
+    --border: #e3e0da;
+    --code-bg: #1e1b2e;
+    --code-text: #e7e3f7;
+    --code-accent: #b9a3ff;
+    --table-head: #f1eefc;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #14131a;
+      --bg-panel: #1c1a25;
+      --text: #eceaf2;
+      --text-dim: #a4a0b5;
+      --accent: #a889ff;
+      --accent-soft: #2a2440;
+      --border: #322e42;
+      --code-bg: #0f0e17;
+      --code-text: #e7e3f7;
+      --code-accent: #c7b3ff;
+      --table-head: #241f38;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.65;
+  }
+  .layout {
+    display: grid;
+    grid-template-columns: 280px minmax(0, 780px);
+    gap: 2.5rem;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 6rem;
+    justify-content: center;
+  }
+  nav.toc {
+    position: sticky;
+    top: 2rem;
+    align-self: start;
+    max-height: calc(100vh - 4rem);
+    overflow-y: auto;
+    padding-right: 0.5rem;
+  }
+  nav.toc h2 {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    margin: 0 0 0.75rem;
+  }
+  nav.toc ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  nav.toc a {
+    display: block;
+    padding: 0.35rem 0.6rem;
+    border-radius: 8px;
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 0.88rem;
+    border-left: 2px solid transparent;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+  nav.toc a:hover {
+    background: var(--accent-soft);
+    color: var(--accent);
+    border-left-color: var(--accent);
+  }
+  header.cover {
+    margin-bottom: 2.5rem;
+  }
+  header.cover .kicker {
+    color: var(--accent);
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.6rem;
+  }
+  header.cover h1 {
+    font-size: 2.1rem;
+    margin: 0 0 0.4rem;
+    letter-spacing: -0.01em;
+  }
+  header.cover .subtitle {
+    color: var(--text-dim);
+    font-size: 1.05rem;
+    margin: 0 0 0.3rem;
+  }
+  header.cover .byline {
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    font-style: italic;
+  }
+  main section {
+    margin-bottom: 2.6rem;
+    padding-top: 0.5rem;
+  }
+  main h2 {
+    font-size: 1.35rem;
+    margin: 0 0 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--accent-soft);
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+  }
+  main h2 .num {
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+  }
+  main h3 {
+    font-size: 1.05rem;
+    margin: 1.6rem 0 0.6rem;
+    color: var(--text);
+  }
+  p { margin: 0 0 0.9rem; color: var(--text); }
+  ul { margin: 0 0 0.9rem; padding-left: 1.3rem; }
+  li { margin-bottom: 0.5rem; }
+  strong { color: var(--text); }
+  .note {
+    background: var(--accent-soft);
+    border-left: 3px solid var(--accent);
+    padding: 0.9rem 1.1rem;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    margin: 1rem 0;
+  }
+  pre {
+    background: var(--code-bg);
+    color: var(--code-text);
+    padding: 1rem 1.2rem;
+    border-radius: 10px;
+    overflow-x: auto;
+    font-size: 0.85rem;
+    line-height: 1.55;
+    margin: 0.8rem 0 1.2rem;
+  }
+  code {
+    font-family: "SF Mono", "Cascadia Code", Consolas, Menlo, monospace;
+  }
+  p code, li code {
+    background: var(--accent-soft);
+    color: var(--accent);
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+    font-size: 0.88em;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.8rem 0 1.2rem;
+    font-size: 0.92rem;
+  }
+  th, td {
+    text-align: left;
+    padding: 0.6rem 0.8rem;
+    border: 1px solid var(--border);
+    vertical-align: top;
+  }
+  th {
+    background: var(--table-head);
+    color: var(--text);
+  }
+  .glossary dt {
+    font-weight: 600;
+    color: var(--accent);
+    margin-top: 0.7rem;
+  }
+  .glossary dd {
+    margin: 0.15rem 0 0;
+    color: var(--text-dim);
+  }
+  footer {
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    text-align: center;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+    margin-top: 3rem;
+  }
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    nav.toc { position: static; max-height: none; margin-bottom: 1rem; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <nav class="toc">
+    <h2>Contenido</h2>
+    <ol>
+      <li><a href="#s1">1. Introducción</a></li>
+      <li><a href="#s2">2. Qué es un log</a></li>
+      <li><a href="#s3">3. Arquitectura distribuida</a></li>
+      <li><a href="#s4">4. HTTP y APIs REST</a></li>
+      <li><a href="#s5">5. Autenticación con tokens</a></li>
+      <li><a href="#s6">6. Persistencia de datos</a></li>
+      <li><a href="#s7">7. Validación y calidad de datos</a></li>
+      <li><a href="#s8">8. Concurrencia y lotes</a></li>
+      <li><a href="#s9">9. Arquitectura implementada</a></li>
+      <li><a href="#s10">10. Recorrido por el código</a></li>
+      <li><a href="#s11">11. Decisiones de diseño</a></li>
+      <li><a href="#s12">12. Sistemas reales</a></li>
+      <li><a href="#s13">13. Glosario</a></li>
+    </ol>
+  </nav>
+  <main>
+    <header class="cover">
+      <div class="kicker">Penguin Academy · logging-distribuido</div>
+      <h1>Sistema de Logging Distribuido</h1>
+      <p class="subtitle">Manual Teórico — Fundamentos y Arquitectura</p>
+    </header>
+
+    <section id="s1">
+      <h2><span class="num">1.</span> Introducción</h2>
+      <p>Después de que el sistema anterior colapsara por falta de trazabilidad ("si nadie registró el error, técnicamente no pasó"), la misión fue diseñar un servicio de logging distribuido: un punto central donde cualquier servicio de la plataforma pueda reportar qué le está pasando, para poder diagnosticar fallas, medir el comportamiento del sistema y tener evidencia cuando algo se rompe.</p>
+      <p>Este manual explica los conceptos teóricos detrás de cada pieza del sistema construido, y cómo se conectan entre sí.</p>
+    </section>
+
+    <section id="s2">
+      <h2><span class="num">2.</span> Qué es un log y por qué registrar todo</h2>
+      <p>Un log es un registro cronológico de un evento que ocurrió dentro de un sistema: quién lo generó, cuándo, con qué gravedad y qué pasó exactamente. Todo log tiene cuatro datos mínimos:</p>
+      <ul>
+        <li><strong>timestamp:</strong> cuándo ocurrió el evento en el servicio de origen.</li>
+        <li><strong>service:</strong> qué componente lo generó.</li>
+        <li><strong>severity:</strong> qué tan grave es (DEBUG, INFO, WARN, ERROR, FATAL).</li>
+        <li><strong>message:</strong> descripción humana de lo que pasó.</li>
+      </ul>
+      <p>En sistemas con un solo servidor alcanza con escribir logs a un archivo local. En sistemas distribuidos (varios servicios o procesos corriendo en paralelo) eso no sirve: cada uno tendría su propio archivo, en su propia máquina, con su propio reloj. Si algo falla, hay que ir servicio por servicio buscando qué pasó. Un servicio de logging centralizado resuelve esto: todos mandan sus logs a un solo lugar, y desde ahí se puede reconstruir la historia completa de un incidente.</p>
+    </section>
+
+    <section id="s3">
+      <h2><span class="num">3.</span> Arquitectura distribuida: clientes y servidor central</h2>
+      <p>El patrón usado es "muchos productores, un consumidor": cualquier cantidad de servicios (clientes) generan eventos de forma independiente y los envían por red a un único servidor que los recibe, valida y guarda.</p>
+      <ul>
+        <li><strong>Los clientes no comparten memoria ni proceso entre sí:</strong> están desacoplados.</li>
+        <li><strong>El servidor central es el único punto de escritura a la base de datos</strong>, lo que evita condiciones de carrera en el almacenamiento.</li>
+        <li><strong>La comunicación entre clientes y servidor es por HTTP</strong>, el protocolo estándar para este tipo de integración porque es simple, universal y no requiere que cliente y servidor compartan tecnología.</li>
+      </ul>
+    </section>
+
+    <section id="s4">
+      <h2><span class="num">4.</span> HTTP y APIs REST</h2>
+      <p>HTTP es el protocolo sobre el que funciona toda la web: un cliente manda una petición (request) a una URL, con un método y opcionalmente un cuerpo de datos, y el servidor responde con un código de estado y una respuesta.</p>
+      <ul>
+        <li><strong>POST:</strong> se usa para crear algo nuevo. En nuestro caso, insertar logs.</li>
+        <li><strong>GET:</strong> se usa para consultar datos sin modificarlos. En nuestro caso, listar logs.</li>
+        <li><strong>Cuerpo en JSON:</strong> formato de texto estructurado, liviano y estándar para intercambiar datos entre sistemas.</li>
+        <li><strong>Códigos de estado relevantes:</strong> 200 OK, 201 Created (log guardado), 400 Bad Request (datos inválidos), 401 Unauthorized (token inválido o ausente).</li>
+      </ul>
+      <p>Una API "REST" es una API HTTP organizada alrededor de recursos (aquí, el recurso es <code>/logs</code>) que usa los métodos HTTP con su significado convencional: POST para crear, GET para leer.</p>
+    </section>
+
+    <section id="s5">
+      <h2><span class="num">5.</span> Autenticación con tokens</h2>
+      <p>Autenticar significa que el servidor pueda confirmar quién está hablando con él antes de aceptar la petición. Sin esto, cualquiera podría mandar logs falsos o basura al sistema.</p>
+      <ul>
+        <li><strong>Un token es un string secreto que actúa como credencial:</strong> quien lo tiene, se asume autorizado.</li>
+        <li><strong>Se envía en el header HTTP <code>Authorization</code></strong>, no en la URL ni en el cuerpo, porque los headers no quedan expuestos en logs de proxies ni en historiales de la misma forma que una URL.</li>
+        <li><strong>Formato usado:</strong> <code>Authorization: Token &lt;valor&gt;</code>. Es un esquema simple; existen esquemas estándar más completos (Bearer para JWT/OAuth), pero para este alcance una lista de tokens válidos es suficiente.</li>
+        <li><strong>El servidor mantiene una lista de tokens válidos asociados a un servicio;</strong> si el token no está en la lista, rechaza la petición con 401 antes de tocar la base de datos.</li>
+      </ul>
+      <div class="note">Esto es <strong>autenticación</strong>, no autorización: solo confirma "quién sos", no decide "qué te dejo hacer" (en un sistema más grande, cada servicio podría tener permisos distintos sobre qué puede loguear).</div>
+    </section>
+
+    <section id="s6">
+      <h2><span class="num">6.</span> Persistencia de datos: bases de datos y SQL</h2>
+      <p>Guardar los logs solo en memoria no sirve: si el servidor se reinicia, se pierde todo. Por eso se usa una base de datos, que persiste los datos en disco de forma estructurada y consultable.</p>
+      <ul>
+        <li><strong>SQLite:</strong> motor de base de datos relacional que guarda todo en un solo archivo, sin necesitar un servidor de base de datos aparte. Ideal para un proyecto de este tamaño.</li>
+        <li><strong>Tabla logs:</strong> estructura con columnas fijas (id, service, severity, message, timestamp, received_at). Cada fila es un log.</li>
+        <li><strong>Índices:</strong> estructuras auxiliares que aceleran las búsquedas por columnas específicas (aquí, timestamp y received_at), para que filtrar por fecha no tenga que recorrer toda la tabla.</li>
+        <li><strong>Transacciones:</strong> agrupan varias operaciones (por ejemplo, insertar 50 logs) para que se apliquen todas juntas o ninguna. Evita quedarse con datos a medias si algo falla en el medio.</li>
+      </ul>
+    </section>
+
+    <section id="s7">
+      <h2><span class="num">7.</span> Validación y calidad de datos</h2>
+      <p>Antes de guardar cualquier dato que venga de afuera hay que verificar que tenga sentido. Sin validación, la base de datos termina llena de información inconsistente que rompe cualquier análisis posterior.</p>
+      <ul>
+        <li>Se valida que <code>timestamp</code> sea una fecha real y parseable.</li>
+        <li>Se valida que <code>service</code> y <code>message</code> sean strings no vacíos.</li>
+        <li>Se valida que <code>severity</code> sea uno de los niveles conocidos (DEBUG, INFO, WARN, ERROR, FATAL).</li>
+        <li>Si un log del lote es inválido, se rechaza el lote completo (todo o nada), para que nunca queden inserciones parciales confusas.</li>
+      </ul>
+    </section>
+
+    <section id="s8">
+      <h2><span class="num">8.</span> Concurrencia y procesamiento por lotes</h2>
+      <p>Un sistema de logging real puede recibir miles de eventos por segundo desde muchos servicios a la vez. El diseño tiene que soportar eso sin caerse.</p>
+      <ul>
+        <li>El endpoint <code>POST /logs</code> acepta un log individual o un array de logs en una sola petición (batch), reduciendo la cantidad de conexiones HTTP necesarias.</li>
+        <li>Las inserciones de un lote se hacen dentro de una transacción SQL, mucho más rápida que insertar fila por fila con confirmaciones separadas.</li>
+        <li>Node.js procesa las peticiones de forma asíncrona (no bloqueante), lo que permite atender múltiples clientes en paralelo sin necesitar un hilo por conexión.</li>
+      </ul>
+
+      <h3>Qué significa "no bloqueante" en la práctica</h3>
+      <p>Node.js corre en un único hilo, pero ese hilo nunca se queda "esperando parado" una operación de entrada/salida (red, disco). Cuando llega una petición HTTP, Node la empieza a procesar y, en el momento en que hay que esperar algo lento (que termine de llegar el body por la red, que el sistema operativo confirme una escritura), delega esa espera y sigue atendiendo otras peticiones mientras tanto. Cuando la operación lenta termina, retoma donde había quedado. A este mecanismo se lo llama <strong>event loop</strong>.</p>
+      <p>Esto es lo que hace posible este proyecto en particular: varios servicios simulados mandando requests casi en simultáneo, más una ráfaga de 1000 logs de golpe, sin que el servidor necesite abrir un hilo del sistema operativo por cada conexión (algo caro en memoria y CPU si se repite miles de veces). Un servidor puramente bloqueante tendría que terminar de atender una petición completa antes de poder empezar a leer la siguiente.</p>
+
+      <div class="note"><strong>Matiz importante:</strong> el driver <code>node:sqlite</code> usado en este proyecto (<code>DatabaseSync</code>, como su nombre lo indica) es en sí mismo <em>síncrono</em>: mientras corre una consulta, sí bloquea el hilo. Como acá las consultas son locales (un archivo en disco, pocas filas) y muy rápidas, ese bloqueo es despreciable. Pero en un sistema con consultas pesadas o una base de datos remota, ahí sí sería un cuello de botella real — por eso en producción se suele usar un driver asíncrono (por ejemplo <code>pg</code> para Postgres) en vez de uno síncrono.</div>
+
+      <h3>Por qué esto es relevante al elegir tecnología</h3>
+      <p>No es que Node sea "más rápido" que otros lenguajes por naturaleza, sino que su modelo de concurrencia por defecto calza perfecto con lo que necesita un servidor de logging: muchas conexiones cortas, la mayoría del tiempo esperando I/O y no haciendo cálculo pesado. Si este mismo servidor se escribiera en Python con <strong>Flask</strong> (el framework sincrónico clásico), cada request ocupa un hilo/worker completo hasta terminar: si 1000 peticiones llegan casi juntas, se procesan de a una por worker disponible y el resto hace cola. Para lograr el mismo comportamiento no bloqueante en Python hay que elegir explícitamente un framework asíncrono como <strong>FastAPI</strong> y escribir los handlers con <code>async</code>/<code>await</code> sobre <code>asyncio</code> — en Node ese modelo viene por defecto, sin tener que elegirlo.</p>
+    </section>
+
+    <section id="s9">
+      <h2><span class="num">9.</span> Arquitectura del sistema implementado</h2>
+      <p>Flujo completo de una petición, de punta a punta:</p>
+      <ul>
+        <li>1. Un servicio simulado genera un log falso (timestamp, service, severity, message).</li>
+        <li>2. Lo envía por HTTP POST a <code>/logs</code>, con su token en el header <code>Authorization</code>.</li>
+        <li>3. El servidor Express recibe la petición y la pasa por el middleware de autenticación.</li>
+        <li>4. Si el token es válido, pasa a la validación de los campos del log.</li>
+        <li>5. Si los datos son válidos, se calcula <code>received_at</code> (momento en que el servidor lo recibió) y se inserta en SQLite dentro de una transacción.</li>
+        <li>6. El servidor responde con 201 y los logs guardados, incluyendo su id.</li>
+        <li>7. Para consultar, un cliente manda <code>GET /logs</code> con filtros opcionales por query string; el servidor arma la consulta SQL con esos filtros y devuelve los resultados ordenados por timestamp.</li>
+      </ul>
+      <div class="note"><strong>Nota clave:</strong> <code>timestamp</code> es la hora que reporta el servicio de origen (cuándo pasó el evento), mientras que <code>received_at</code> es la hora del servidor central (cuándo llegó el log). Pueden diferir por latencia de red, reintentos o relojes desincronizados entre servicios; por eso el sistema permite filtrar por ambas.</div>
+    </section>
+
+    <section id="s10">
+      <h2><span class="num">10.</span> Recorrido por el código</h2>
+      <h3>server/index.js</h3>
+      <p>Define el servidor Express y los dos endpoints principales.</p>
+      <pre><code>app.post('/logs', authMiddleware, (req, res) => {
+  const entries = Array.isArray(req.body) ? req.body : [req.body];
+  const errors = entries.flatMap(validateLog);
+  if (errors.length > 0) return res.status(400).json({ error: 'Logs invalidos', details: errors });
+  const ids = insertLogs(entries.map(normalizeLog));
+  res.status(201).json({ inserted: ids.length, logs: /* ... */ });
+});</code></pre>
+
+      <h3>server/auth.js + server/tokens.js</h3>
+      <p>El middleware de autenticación intercepta la petición antes de llegar al handler.</p>
+      <pre><code>export function authMiddleware(req, res, next) {
+  const [scheme, token] = (req.get('Authorization') || '').split(' ');
+  const service = scheme === 'Token' ? resolveServiceFromToken(token) : null;
+  if (!service) return res.status(401).json({ error: 'Quien sos, bro?' });
+  req.authService = service;
+  next();
+}</code></pre>
+
+      <h3>server/db.js</h3>
+      <p>Encapsula el acceso a SQLite: creación de la tabla, inserción en lote dentro de una transacción, y consulta con filtros dinámicos.</p>
+      <pre><code>export function insertLogs(logs) {
+  db.exec('BEGIN');
+  const ids = logs.map(insertLog);
+  db.exec('COMMIT');
+  return ids;
+}</code></pre>
+
+      <h3>clients/services.js + clients/simulate.js</h3>
+      <p>Simulan servicios reales: generan logs falsos con severidades realistas (más INFO que FATAL) y los mandan al servidor, en modo tiempo real o en ráfaga para pruebas de carga.</p>
+    </section>
+
+    <section id="s11">
+      <h2><span class="num">11.</span> Decisiones de diseño</h2>
+      <table>
+        <thead><tr><th>Decisión</th><th>Por qué</th></tr></thead>
+        <tbody>
+          <tr><td>SQLite nativo (<code>node:sqlite</code>) en vez de una base externa</td><td>No requiere instalar ni levantar un servicio de base de datos aparte; para el volumen de este proyecto es más que suficiente.</td></tr>
+          <tr><td>Tokens fijos en una lista manual</td><td>La consigna pide explícitamente una lista manual; en un sistema real se reemplazaría por tokens rotables guardados de forma segura.</td></tr>
+          <tr><td><code>POST /logs</code> acepta uno o varios logs</td><td>Evita que un servicio con mucho volumen tenga que abrir una conexión HTTP por cada línea de log.</td></tr>
+          <tr><td>Validación todo-o-nada por lote</td><td>El cliente siempre sabe con certeza si se guardó todo o nada; nunca queda en un estado ambiguo.</td></tr>
+          <tr><td>Se separan <code>timestamp</code> y <code>received_at</code></td><td>Permite detectar demoras de red o desincronización de relojes entre servicios.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="s12">
+      <h2><span class="num">12.</span> Cómo se hace esto en sistemas reales</h2>
+      <p>Este proyecto es una versión simplificada y didáctica de algo que en la industria se resuelve con herramientas especializadas:</p>
+      <ul>
+        <li><strong>ELK Stack (Elasticsearch, Logstash, Kibana):</strong> recolecta, indexa y visualiza logs a gran escala.</li>
+        <li><strong>Grafana Loki:</strong> sistema de logging pensado para integrarse con métricas y dashboards de Grafana.</li>
+        <li><strong>Colas de mensajes (Kafka, RabbitMQ):</strong> en vez de mandar logs directo por HTTP, los servicios los publican en una cola y workers los consumen y guardan, así el servidor de logging nunca se satura ni bloquea a los servicios que lo usan.</li>
+        <li><strong>Autenticación real:</strong> en vez de una lista fija de tokens, se usan API keys rotables, mTLS o JWT firmados con expiración.</li>
+      </ul>
+      <p>La arquitectura armada (servicios → HTTP → validación → base de datos) es el mismo esqueleto conceptual que estas herramientas, a una escala mucho más chica y sin las piezas de infraestructura adicional (colas, clusters, réplicas).</p>
+    </section>
+
+    <section id="s13">
+      <h2><span class="num">13.</span> Glosario</h2>
+      <dl class="glossary">
+        <dt>Log</dt><dd>Registro de un evento.</dd>
+        <dt>Timestamp</dt><dd>Marca de tiempo de un evento.</dd>
+        <dt>Severity (nivel de severidad)</dt><dd>Qué tan grave es un evento.</dd>
+        <dt>Endpoint</dt><dd>Una URL específica de una API que atiende un tipo de petición.</dd>
+        <dt>Middleware</dt><dd>Función que intercepta una petición antes de que llegue al handler final (por ejemplo, para autenticar).</dd>
+        <dt>Token</dt><dd>Credencial secreta usada para autenticar.</dd>
+        <dt>Query string</dt><dd>Parámetros que van después del "?" en una URL, por ejemplo <code>?service=pagos</code>.</dd>
+        <dt>Transacción</dt><dd>Conjunto de operaciones de base de datos que se aplican todas juntas o ninguna.</dd>
+        <dt>Batch / lote</dt><dd>Agrupar varios elementos en una sola operación.</dd>
+        <dt>Event loop</dt><dd>Mecanismo de Node.js (un solo hilo) que va turnándose entre tareas: cuando una tiene que esperar una operación de I/O, la deja en pausa y atiende otra, sin bloquear todo el proceso.</dd>
+        <dt>I/O no bloqueante (non-blocking I/O)</dt><dd>Modelo donde el programa no se queda "parado" esperando que termine una operación lenta (red, disco); sigue atendiendo otras tareas mientras esa operación se resuelve en segundo plano.</dd>
+        <dt>ACID</dt><dd>Propiedades que garantizan que las transacciones de una base de datos sean confiables (Atomicidad, Consistencia, Aislamiento, Durabilidad).</dd>
+      </dl>
+    </section>
+
+    <footer>Manual Teórico — Sistema de Logging Distribuido · Penguin Academy</footer>
+  </main>
+</div>
+</body>
+</html>
