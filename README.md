@@ -6,7 +6,7 @@ Diseñar un Servicio de Logging Distribuido, múltiples servicios simulados, env
 
 Múltiples servicios simulados (aka script random tiren errores falsos) envíen sus logs a un servidor central, que guarde y analice
 ***
-2 Obejtivo tecnico
+2. Objetivo tecnico
 - Construir un sistema de registros distribuidos
 - Servicios simulados que generen logs y los envíen por http
 - un servidor central de registros que recibe, válida y guarda y devuelve registros
@@ -15,7 +15,7 @@ Múltiples servicios simulados (aka script random tiren errores falsos) envíen 
 - Guardado en base de datos,
 
 ***
-3 crear Servicios simulados (logging)
+3. crear Servicios simulados (logging)
  3.1 Simular servicios que:
 - Generen registros falsos()
 	- Envíen los registros en formato JSON a un servidor central con método Post
@@ -36,7 +36,7 @@ Múltiples servicios simulados (aka script random tiren errores falsos) envíen 
 - Soportar múltiples logs enviados a la vez 
 - Crear un punto final para consultar registros: GET/Logs
 ***	
-4 autenticacion
+4. autenticacion
 - crear lista manual de tokens válidos para servicios
 - Cada servicio debe enviar su token en el autorizador
 - Si no es válido, el servidor responde con error y un mensaje
