@@ -52,7 +52,7 @@ def enviar_log_al_servidor(registro_log: Dict[str,Any], token_autenticacion:str)
     """ Envía un único registro de log por método HTTP POST con el encabezado de autorización."""
     encabezado_http={
         "Content-Type":"application/json",
-        "Authorization":f"token{token_autenticacion}"
+        "Authorization":f"token {token_autenticacion}"
     }
 
     try:
@@ -70,7 +70,7 @@ def envia_lote_logs(lista_registros: List[Dict[str,Any]],token_autenticacion:str
     """Demuestra el envío múltiple (batch) de registros en una sola llamada HTTP POST."""
     encabezado_http={
             "Content-Type":"application/json",
-            "Authorization":f"token{token_autenticacion}"
+            "Authorization":f"token {token_autenticacion}"
         }
 
     try:
@@ -89,7 +89,7 @@ def probar_token_invalidos()->None:
     print("\n --- PRUEBA DE SEGURIDAD: Probando Token Inválido ---")
     encabezados_invalidos={
         "Content-Type":"application/json",
-        "Authorization":"token_ESTE_TOKEN_ES_FALSO_123"
+        "Authorization":"token ESTE_TOKEN_ES_FALSO_123"
     }
     log_prueba = {
         "timestamp": datetime.now().isoformat(),
@@ -102,8 +102,8 @@ def probar_token_invalidos()->None:
     print(f"Respuesta del Servidor a token Invalidos: Status {respuesta.status_code}")
     print(f"Detalle de Error: {respuesta.json()}\n")
 
-    def ejecutar_simulacion():
-        print ("===< Iniciando simulacion de servicios emisores de logs >===")
+def ejecutar_simulacion():
+    print ("===< Iniciando simulacion de servicios emisores de logs >===")
 
     #1. enviar registros individuales aleatorios
     for _ in range(5):
@@ -114,10 +114,10 @@ def probar_token_invalidos()->None:
 
     #2. probar en lote
     servicio_lote = random.choice(SERVICIOS_CONFIGURADOS)
-    log_generador = [crear_registro_falso(servicio_lote) for _ in range(3)]
-
+    lote_logs = [crear_registro_falso(servicio_lote) for _ in range(3)]
+    envia_lote_logs(lote_logs,servicio_lote["token"])
     #3. Probar rechazo de Token Invalido
     probar_token_invalidos()
 
-    if __name__=='__main__':
-        ejecutar_simulacion()
+if __name__=='__main__':
+    ejecutar_simulacion()
