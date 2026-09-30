@@ -5,7 +5,7 @@ import sys
 import os
 
 # permitir la importacion del modulo de base de datos desde la carpeta hermana
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'base_datos'))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from base_de_datos.gestor_base_datos import(
     inicializar_base_de_datos,
     guardar_registros,
@@ -17,7 +17,7 @@ aplicacion_servidor = Flask(__name__)
 # Lista manual de tokens autorizados mapeados al servicio correspondiente
 DICCIONARIO_TOKENS_VALIDOS = {
     "token-servicio-autenticacion-789":"servicio_autenticacion",
-    "token-servicio-pago-456": "servicio_pago",
+    "token-servicio-pago-456": "servicio_pagos",
     "token-servicio-inventario-123": "servicio_inventario"
 }
 
@@ -36,7 +36,7 @@ def validar_token_autorizacion(cabecera_autorizacion: str)->bool:
     token_extraido= partes_cabecera[1]
     return token_extraido in DICCIONARIO_TOKENS_VALIDOS
 
-@aplicacion_servidor.route('/registro', methods=['POST'])
+@aplicacion_servidor.route('/logs', methods=['POST'])
 def recibir_registros():
     """
     Endpoint POST /logs Recibe registros en JSON (un solo registro o una lista de ellos) y los almacena.
