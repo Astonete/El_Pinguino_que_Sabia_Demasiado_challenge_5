@@ -11,7 +11,7 @@ def inicializar_base_de_datos()-> None:
 
     consulta_cracion_tabla="""
     CREATE TABLE IF NOT EXISTS logs (
-        id INTEGER PRIMARY KEY AUTOINCREMENT),
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
         timestamp TEXT NOT NULL,
         servicio TEXT NOT NULL,
         gravedad TEXT NOT NULL,
@@ -51,28 +51,29 @@ def consultar_registros(
     """Consulta registros almacenados en la base de datos con soporte opcional de rango de fechas."""
     
     conexion_sqlite=sqlite3.connect(RUTA_BASE_DATOS)
-    "SELECT id, timestamp, servicio, gravedad, mensaje FROM logs WHERE 1=1"
     # permie accede a los resutados como diccionarios
     conexion_sqlite.row_factory=sqlite3.Row
     cursor_base_datos=conexion_sqlite.cursor()
+
+    consulta_sql="SELECT id, timestamp, servicio, gravedad, mensaje FROM logs WHERE 1=1"
     parametros_consulta=[]
 
     #filtro dinamico por rango de fecha y hora
     if fecha_inicio:
-        consulta_sql+="AND timestamp>=?"
+        consulta_sql+=" AND timestamp >= ?"
         parametros_consulta.append(fecha_inicio)
 
     if fecha_fin:
-            consulta_sql+="AND timestamp<=?"
+            consulta_sql+=" AND timestamp <= ?"
             parametros_consulta.append(fecha_fin)
     
-    consulta_sql+="ORDER BY timestamp DESC"
+    consulta_sql+=" ORDER BY timestamp DESC"
 
     cursor_base_datos.execute(consulta_sql,parametros_consulta)
     filas_obtenidas=cursor_base_datos.fetchall()
 
     # Convertimos cada fila SQLite a un diccionario nativo de Python
-    lista_registros_obtenidos=[Dict[fila] for fila in filas_obtenidas]
+    lista_registros_obtenidos=[dict(fila) for fila in filas_obtenidas]
 
     conexion_sqlite.close()
     return lista_registros_obtenidos
