@@ -17,7 +17,7 @@ aplicacion_servidor = Flask(__name__)
 # Lista manual de tokens autorizados mapeados al servicio correspondiente
 DICCIONARIO_TOKENS_VALIDOS = {
     "token-servicio-autenticacion-789":"servicio_autenticacion",
-    "token-servicio-pago-456": "servicio_pagos",
+    "token-servicio-pagos-456": "servicio_pagos",
     "token-servicio-inventario-123": "servicio_inventario"
 }
 
@@ -47,13 +47,13 @@ def recibir_registros():
     if not validar_token_autorizacion(cabecera_autorizacion):
         return jsonify({
                         "estado":"error",
-                        "mensaje":"Ndepio Ma'a: puede que no tengas token, o el token sea mas falso que tu personalidad"
+                        "mensaje":"Ndepio Ma'a: puede que no tengas token, o el token sea más falso que tu personalidad"
                     }),401
     datos_json_recibidos=request.get_json()
     if not datos_json_recibidos:
         return jsonify({
             "estado":"error",
-            "mensaje":"Peticion Invalida: Si no va ser un archivo JSON deja nomas ya no quiero"
+            "mensaje":"Petición Inválida: Si no va a ser un archivo JSON deja nomás ya no quiero"
         }),400
 
     # Normalizamos  el dato recibido para procesar un solo dict o una lista de dicts
@@ -73,22 +73,20 @@ def recibir_registros():
         if not campos_requeridos.issubset(registro.keys()):
             return jsonify({
                 "estado":"error",
-                "mensaje":f"Registro Incompleto por estructura invalida: faltan campos requeridos cada resgistro debe incluir {campos_requeridos}"
+                "mensaje":f"Registro Incompleto por estructura inválida: faltan campos requeridos cada registro debe incluir {campos_requeridos}"
                 }),400
     
     # 3. Guardado en Base de Datos
     cantidad_guardada=guardar_registros(lista_logs_a_guardar)
     
     return jsonify({
-        "estado":"exito",
-        "mensaje": f"se procesaron y almacenaron {cantidad_guardada} registros de log correctamente"
+        "estado":"éxito",
+        "mensaje": f"Se procesaron y almacenaron {cantidad_guardada} registros de log correctamente"
     }),201
 
 @aplicacion_servidor.route('/logs', methods=['GET'])
 def obtener_registros():
-    """
-    Endpoint GET /logs
-    Permite consultar logs almacenados filtrando por 'fecha_inicio' y 'fecha_fin'
+    """Endpoint GET /logs Permite consultar logs almacenados filtrando por 'fecha_inicio' y 'fecha_fin'
     Ejemplo: GET /logs?fecha_inicio=2026-09-01T00:00:00&fecha_fin=2026-09-30T23:59:59
     """
     fecha_inicio_filtro = request.args.get('fecha_inicio')
@@ -100,13 +98,13 @@ def obtener_registros():
     )
 
     return jsonify({
-        "estado":"exito",
-        "total_registro": len(registros_encontrados),
+        "estado":"éxito",
+        "total_registros": len(registros_encontrados),
         "registros":registros_encontrados
     }), 200
 
 if __name__=='__main__':
     # Inicializa todas Las tablas al arrancar el servidor
     inicializar_base_de_datos()
-    print("- Servidor Central de logs ejecutandose en http://localhost:5000")
+    print("- Servidor Central de logs ejecutándose en http://localhost:5000")
     aplicacion_servidor.run(host='0.0.0.0',port=5000,debug=True)
